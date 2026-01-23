@@ -1,9 +1,9 @@
-from helpers.request_utils import get_response, get_dom
-from helpers.string_utils import get_removal
-from libs.monitoring import logging
-from libs.system import os
+import logging
+import os
 
 from constants.project import DEFAULT_AVATAR_ID, LASTFM_USER_URL
+from helpers.request_utils import get_response, get_dom
+from helpers.string_utils import get_removal
 
 def parse_user_display_name(page_content):
     """

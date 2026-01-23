@@ -1,4 +1,4 @@
-from libs.scrapers import parse
+from urllib import parse
 
 def url_encoder(text: str) -> str:
     """

@@ -1,7 +1,9 @@
-from libs.web_requests import requests
-from libs.scrapers import BeautifulSoup
-from libs.monitoring import logging
-from libs.system import time
+import logging
+import time
+
+import requests
+from bs4 import BeautifulSoup
+
 from constants.project import RETRY_INTERVAL, MAX_RETRIES
 
 def get_response(url: str, retry_interval: int = RETRY_INTERVAL, max_retries: int = MAX_RETRIES) -> requests.Response:

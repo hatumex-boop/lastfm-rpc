@@ -1,3 +1,14 @@
+import asyncio
+import logging
+import threading
+import time
+import sys
+import os
+from tkinter import messagebox
+
+from pystray import Icon, Menu, MenuItem
+from PIL import Image
+
 from constants.project import (
     USERNAME, APP_NAME, 
     APP_ICON_PATH, 
@@ -6,17 +17,9 @@ from constants.project import (
 from helpers.string_utils import messenger
 from api.lastfm.user.tracking import User
 from api.discord.rpc import DiscordRPC
-from libs.web_requests import asyncio
-from libs.monitoring import logging
-from libs.system import (
-    Icon, Menu, MenuItem,
-    messagebox,
-    threading,
-    Image,
-    time,
-    sys,
-    os
-    )
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class App:
     def __init__(self):

@@ -1,6 +1,7 @@
+import logging
+
+import pylast
 from constants.project import API_KEY, API_SECRET, TRANSLATIONS, DEFAULT_COOLDOWN
-from libs.monitoring import logging
-from api.lastfm import pylast
 
 network = pylast.LastFMNetwork(API_KEY, API_SECRET)
 

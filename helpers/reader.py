@@ -1,8 +1,7 @@
-from libs.monitoring import logging
-from libs.system import (
-    Tuple, Dict,
-    sys
-    )
+import logging
+import sys
+from typing import Tuple, Dict
+
 import yaml
 
 def load_yaml_file(file_path: str) -> dict:
