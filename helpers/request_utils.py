@@ -2,8 +2,9 @@ from libs.web_requests import requests
 from libs.scrapers import BeautifulSoup
 from libs.monitoring import logging
 from libs.system import time
+from constants.project import RETRY_INTERVAL, MAX_RETRIES
 
-def get_response(url: str, retry_interval: int = 2, max_retries: int = 10) -> requests.Response:
+def get_response(url: str, retry_interval: int = RETRY_INTERVAL, max_retries: int = MAX_RETRIES) -> requests.Response:
     """
     Connects to the specified URL and retries until a successful response is received or the max retries limit is reached.
     

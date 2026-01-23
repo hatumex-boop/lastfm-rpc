@@ -3,7 +3,7 @@ from helpers.string_utils import get_removal
 from libs.monitoring import logging
 from libs.system import os
 
-from constants.project import DEFAULT_AVATAR_ID
+from constants.project import DEFAULT_AVATAR_ID, LASTFM_USER_URL
 
 def parse_user_display_name(page_content):
     """
@@ -77,7 +77,7 @@ def get_user_data(username) -> dict:
     Returns:
         dict: A dictionary containing the user's display name, avatar URL, and header status.
     """
-    USER_PROFILE_URL = f'https://www.last.fm/user/{username}'
+    USER_PROFILE_URL = LASTFM_USER_URL.format(username=username)
 
     response = get_response(USER_PROFILE_URL)
     if response.status_code in range(200, 299):

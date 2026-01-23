@@ -2,7 +2,12 @@ from api.lastfm.user.library import get_library_data
 from api.lastfm.user.profile import get_user_data
 from api.discord import Presence, exceptions
 from helpers.url_utils import url_encoder
-from constants.project import CLIENT_ID
+from constants.project import (
+    CLIENT_ID, RETRY_INTERVAL, 
+    DAY_MODE_COVER, NIGHT_MODE_COVER,
+    RPC_LINE_LIMIT, RPC_XCHAR,
+    LASTFM_TRACK_URL_TEMPLATE, YT_MUSIC_SEARCH_TEMPLATE
+)
 from libs.system import datetime, time
 from libs.monitoring import logging
 
@@ -20,7 +25,7 @@ class DiscordRPC:
                 break
             except exceptions.DiscordNotFound as e:
                 logging.error(f"Discord not found: {e}")
-                time.sleep(5)
+                time.sleep(RETRY_INTERVAL)
 
         self._enabled = False
         self._disabled = True
@@ -98,11 +103,11 @@ class DiscordRPC:
             track_artist_album = f'{artist} - {album}'
 
             rpcButtons = [
-                {"label": "View Track", "url": str(f"https://www.last.fm/tr/user/{username}/library/music/{url_encoder(artist)}/_/{url_encoder(title)}")},
-                {"label": "Search on YouTube Music", "url": str(f"https://music.youtube.com/search?q={url_encoder(album)}")}
-                #{"label": "Search on Spotify", "url": str(f"https://open.spotify.com/search/{url_encoder(album)}")}
+                {"label": "View Track", "url": str(LASTFM_TRACK_URL_TEMPLATE.format(username=username, artist=url_encoder(artist), title=url_encoder(title)))},
+                {"label": "Search on YouTube Music", "url": str(YT_MUSIC_SEARCH_TEMPLATE.format(query=url_encoder(album)))},
+                #{"label": "Search on Spotify", "url": str(SPOTIFY_SEARCH_TEMPLATE.format(query=url_encoder(album)))},
                 #{"label": "View Track", "url": str(f"https://www.last.fm/music/{url_encoder(artist)}/{url_encoder(title)}")}
-                #{"label": "View Last.fm Profile", "url": str(f"https://www.last.fm/user/{username}")}
+                #{"label": "View Last.fm Profile", "url": str(LASTFM_USER_URL.format(username=username))}
             ]
 
             user_data = get_user_data(username)
@@ -130,7 +135,7 @@ class DiscordRPC:
                 now = datetime.datetime.now()
                 #day: false, night: true
                 is_day = now.hour >= 18 or now.hour < 9 
-                artwork = 'https://i.imgur.com/GOVbNaF.png' if is_day else 'https://i.imgur.com/kvGS4Pa.png'
+                artwork = DAY_MODE_COVER if is_day else NIGHT_MODE_COVER
                 large_image_lines['theme'] = f"{'Night' if is_day else 'Day'} Mode Cover"
             else:
                 pass
@@ -145,8 +150,8 @@ class DiscordRPC:
             # line process
             rpc_small_image_text = ''
             rpc_large_image_text = ''
-            line_limit = 26
-            xchar = ' '
+            line_limit = RPC_LINE_LIMIT
+            xchar = RPC_XCHAR
 
             #print(len(large_image_lines), large_image_lines)
 

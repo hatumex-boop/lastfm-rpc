@@ -1,4 +1,8 @@
-from constants.project import USERNAME, APP_NAME
+from constants.project import (
+    USERNAME, APP_NAME, 
+    APP_ICON_PATH, 
+    TRACK_CHECK_INTERVAL, UPDATE_INTERVAL
+)
 from helpers.string_utils import messenger
 from api.lastfm.user.tracking import User
 from api.discord.rpc import DiscordRPC
@@ -39,7 +43,7 @@ class App:
     def load_icon(self, directory):
         """Loads the application icon from the assets directory."""
         try:
-            return Image.open(os.path.join(directory, "assets/last_fm.png"))
+            return Image.open(os.path.join(directory, APP_ICON_PATH))
         except FileNotFoundError:
             messagebox.showerror(messenger('err'), messenger('err_assets'))
             sys.exit(1)
@@ -81,12 +85,12 @@ class App:
                         USERNAME,
                         artwork
                     )
-                    time.sleep(5)
+                    time.sleep(TRACK_CHECK_INTERVAL)
                 else:
                     self.rpc.disable()
             except Exception as e:
                 logging.error(f"Unexpected error: {e}")
-            time.sleep(2)
+            time.sleep(UPDATE_INTERVAL)
 
     def run(self):
         """Starts the system tray application and RPC thread."""

@@ -1,10 +1,11 @@
 from helpers.request_utils import get_response, get_dom
 from helpers.string_utils import get_removal
 from helpers.url_utils import url_encoder
+from constants.project import LASTFM_LIBRARY_URL
 
 def get_library_data(username, artist_name, track_name) -> dict:
 
-    USER_LIBRARY_URL = f'https://www.last.fm/user/{username}/library'
+    USER_LIBRARY_URL = LASTFM_LIBRARY_URL.format(username=username)
     # + ?date_preset=ALL (login req)
     USER_LIBRARY_ARTIST_URL = "/".join([USER_LIBRARY_URL, "music", "+noredirect", url_encoder(artist_name)])
     USER_LIBRARY_TRACK_URL = "/".join([USER_LIBRARY_URL, "music", "+noredirect", url_encoder(artist_name), "_", url_encoder(track_name)])

@@ -1,13 +1,11 @@
-from constants.project import API_KEY, API_SECRET, TRANSLATIONS
-from api.discord.rpc import DiscordRPC
+from constants.project import API_KEY, API_SECRET, TRANSLATIONS, DEFAULT_COOLDOWN
 from libs.monitoring import logging
 from api.lastfm import pylast
 
 network = pylast.LastFMNetwork(API_KEY, API_SECRET)
-rpc = DiscordRPC()
 
 class User:
-    def __init__(self, username, cooldown=6):
+    def __init__(self, username, cooldown=DEFAULT_COOLDOWN):
         self.username = username
         self.user = network.get_user(username)
         self.cooldown = cooldown
