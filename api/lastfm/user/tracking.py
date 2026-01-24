@@ -16,8 +16,8 @@ class User:
     def _get_current_track(self):
         try:
             return self.lastfm_user.get_now_playing()
-        except pylast.WSError:
-            logger.error(TRANSLATIONS['pylast_ws_error'].format(self.cooldown))
+        except pylast.WSError as e:
+            logger.error(f"{TRANSLATIONS['pylast_ws_error'].format(self.cooldown)} | Details: {e}")
         except pylast.NetworkError:
             logger.error(TRANSLATIONS['pylast_network_error'])
         except pylast.MalformedResponseError:
