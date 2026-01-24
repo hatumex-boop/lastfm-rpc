@@ -141,8 +141,7 @@ class DiscordRPC:
         ]
 
     def update_status(self, track, title, artist, album, time_remaining, username, artwork):
-        for _ in [track, title, artist, album, time_remaining, username, artwork]:
-            logging.debug(f"RPC variable: {_}")
+        logging.debug(f"Update: track={track}, title={title}, artist={artist}, album={album}, time={time_remaining}")
 
         if len(title) < 2:
             title = title + ' '

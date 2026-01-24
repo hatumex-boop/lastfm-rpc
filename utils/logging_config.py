@@ -34,11 +34,17 @@ class ColoredFormatter(logging.Formatter):
         # Format timestamp safely
         time_str = self.formatTime(record, "%H:%M:%S")
         
+        # Truncate extremely long messages (like XML dumps) for terminal readability
+        message = record.getMessage()
+        if len(message) > 500:
+            message = message[:500] + "... [TRUNCATED]"
+            
         # Color certain parts of the message for better scanning
         log_fmt = (
             f"{self.COLORS['DEBUG']}[{time_str}]{self.RESET} "
             f"{level_color}{self.BOLD}{level_symbol} {record.levelname:<8}{self.RESET} "
-            f"- {record.getMessage()}"
+            f"{self.COLORS['DEBUG']}[{record.name}]{self.RESET} "
+            f"- {message}"
         )
         
         # Handle exceptions if they exist
@@ -71,8 +77,12 @@ def setup_logging(level=logging.INFO):
     
     logger.addHandler(console_handler)
     
-    # Optionally reduce noise from external libraries
-    # logging.getLogger("urllib3").setLevel(logging.WARNING)
-    # logging.getLogger("pylast").setLevel(logging.WARNING)
+    # Silence noisy external libraries
+    logging.getLogger("httpcore").setLevel(logging.WARNING)
+    logging.getLogger("httpx").setLevel(logging.WARNING)
+    logging.getLogger("pylast").setLevel(logging.WARNING)
+    logging.getLogger("pypresence").setLevel(logging.WARNING)
+    logging.getLogger("urllib3").setLevel(logging.WARNING)
+    logging.getLogger("pystray").setLevel(logging.WARNING)
 
     return logger
