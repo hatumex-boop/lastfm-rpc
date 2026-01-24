@@ -17,6 +17,10 @@ class User:
         try:
             return self.lastfm_user.get_now_playing()
         except pylast.WSError as e:
+            if "Invalid API key" in str(e):
+                logger.critical("CRITICAL: Invalid API Key. Please update config.yaml with a valid key from Last.fm.")
+                import sys
+                sys.exit(1)
             logger.error(f"{TRANSLATIONS['pylast_ws_error'].format(self.cooldown)} | Details: {e}")
         except pylast.NetworkError:
             logger.error(TRANSLATIONS['pylast_network_error'])
