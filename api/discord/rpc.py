@@ -87,124 +87,124 @@ class DiscordRPC:
 
         if self.last_track == track:
             # if the track is the same as the last track, don't update the status
-            pass
+            return
+
+        # if the track is different, update the status
+        album_bool = album is not None
+        time_remaining_bool = time_remaining > 0
+        if time_remaining_bool:
+            time_remaining = float(str(time_remaining)[0:3])
+
+        logging.info(f'Album: {album}')
+        logging.info(f'Time Remaining: {time_remaining_bool} - {time_remaining}')
+        logging.info(f"Now Playing: {track}")
+
+        self.start_time = datetime.datetime.now().timestamp()
+        self.last_track = track
+        track_artist_album = f'{artist} - {album}'
+
+        rpc_buttons = [
+            {"label": "View Track", "url": str(LASTFM_TRACK_URL_TEMPLATE.format(username=username, artist=url_encoder(artist), title=url_encoder(title)))},
+            {"label": "Search on YouTube Music", "url": str(YT_MUSIC_SEARCH_TEMPLATE.format(query=url_encoder(album)))},
+            #{"label": "Search on Spotify", "url": str(SPOTIFY_SEARCH_TEMPLATE.format(query=url_encoder(album)))},
+            #{"label": "View Track", "url": str(f"https://www.last.fm/music/{url_encoder(artist)}/{url_encoder(title)}")}
+            #{"label": "View Last.fm Profile", "url": str(LASTFM_USER_URL.format(username=username))}
+        ]
+
+        user_data = get_user_data(username)
+        #print(json.dumps(user_data, indent=2))
+
+        user_display_name = user_data["display_name"]
+        scrobbles, artists, loved_tracks = user_data["header_status"] # unpacking
+
+        library_data = get_library_data(username, artist, title)
+        #print(json.dumps(library_data, indent=2))
+
+        rpc_small_image = user_data["avatar_url"]
+        artist_count = library_data["artist_count"]
+
+        large_image_lines = {}
+        small_image_lines = {
+            'name':         f"{user_display_name} (@{username})",
+            "scrobbles":    f'Scrobbles: {scrobbles}',
+            "artists":      f'Artists: {artists}',
+            "loved_tracks": f'Loved Tracks: {loved_tracks}'}
+
+        # artwork
+        if artwork is None:
+            # if there is no artwork, use the default one
+            now = datetime.datetime.now()
+            #day: false, night: true
+            is_day = now.hour >= 18 or now.hour < 9 
+            artwork = DAY_MODE_COVER if is_day else NIGHT_MODE_COVER
+            large_image_lines['theme'] = f"{'Night' if is_day else 'Day'} Mode Cover"
         else:
-            # if the track is different, update the status
-            album_bool = album is not None
-            time_remaining_bool = time_remaining > 0
-            if time_remaining_bool:
-                time_remaining = float(str(time_remaining)[0:3])
+            pass
 
-            logging.info(f'Album: {album}')
-            logging.info(f'Time Remaining: {time_remaining_bool} - {time_remaining}')
-            logging.info(f"Now Playing: {track}")
+        if artist_count:
+            # if the artist is in the library
+            track_count = library_data["track_count"]
+            large_image_lines["artist_scrobbles"] = f'Scrobbles: {artist_count}/{track_count}' if track_count else f'Scrobbles: {artist_count}'
+        else:
+            large_image_lines['first_time'] = 'First time listening!'
 
-            self.start_time = datetime.datetime.now().timestamp()
-            self.last_track = track
-            track_artist_album = f'{artist} - {album}'
+        # line process
+        rpc_small_image_text = ''
+        rpc_large_image_text = ''
+        line_limit = RPC_LINE_LIMIT
+        xchar = RPC_XCHAR
 
-            rpc_buttons = [
-                {"label": "View Track", "url": str(LASTFM_TRACK_URL_TEMPLATE.format(username=username, artist=url_encoder(artist), title=url_encoder(title)))},
-                {"label": "Search on YouTube Music", "url": str(YT_MUSIC_SEARCH_TEMPLATE.format(query=url_encoder(album)))},
-                #{"label": "Search on Spotify", "url": str(SPOTIFY_SEARCH_TEMPLATE.format(query=url_encoder(album)))},
-                #{"label": "View Track", "url": str(f"https://www.last.fm/music/{url_encoder(artist)}/{url_encoder(title)}")}
-                #{"label": "View Last.fm Profile", "url": str(LASTFM_USER_URL.format(username=username))}
-            ]
+        #print(len(large_image_lines), large_image_lines)
 
-            user_data = get_user_data(username)
-            #print(json.dumps(user_data, indent=2))
+        for line_key in small_image_lines:
+            line = f'{small_image_lines[line_key]} '
+            line_suffix = "" if len(line) > 20 else (line_limit - len(line) - sum(_.isupper() for _ in line))*xchar
+            rpc_small_image_text += f'{line}{line_suffix} '
 
-            user_display_name = user_data["display_name"]
-            scrobbles, artists, loved_tracks = user_data["header_status"] # unpacking
-
-            library_data = get_library_data(username, artist, title)
-            #print(json.dumps(library_data, indent=2))
-
-            rpc_small_image = user_data["avatar_url"]
-            artist_count = library_data["artist_count"]
-
-            large_image_lines = {}
-            small_image_lines = {
-                'name':         f"{user_display_name} (@{username})",
-                "scrobbles":    f'Scrobbles: {scrobbles}',
-                "artists":      f'Artists: {artists}',
-                "loved_tracks": f'Loved Tracks: {loved_tracks}'}
-
-            # artwork
-            if artwork is None:
-                # if there is no artwork, use the default one
-                now = datetime.datetime.now()
-                #day: false, night: true
-                is_day = now.hour >= 18 or now.hour < 9 
-                artwork = DAY_MODE_COVER if is_day else NIGHT_MODE_COVER
-                large_image_lines['theme'] = f"{'Night' if is_day else 'Day'} Mode Cover"
+        for line_key in large_image_lines:
+            line = f'{large_image_lines[line_key]} '
+            if len(large_image_lines) == 1:
+                rpc_large_image_text = line
             else:
-                pass
-
-            if artist_count:
-                # if the artist is in the library
-                track_count = library_data["track_count"]
-                large_image_lines["artist_scrobbles"] = f'Scrobbles: {artist_count}/{track_count}' if track_count else f'Scrobbles: {artist_count}'
-            else:
-                large_image_lines['first_time'] = 'First time listening!'
-
-            # line process
-            rpc_small_image_text = ''
-            rpc_large_image_text = ''
-            line_limit = RPC_LINE_LIMIT
-            xchar = RPC_XCHAR
-
-            #print(len(large_image_lines), large_image_lines)
-
-            for line_key in small_image_lines:
-                line = f'{small_image_lines[line_key]} '
+                """
                 line_suffix = "" if len(line) > 20 else (line_limit - len(line) - sum(_.isupper() for _ in line))*xchar
-                rpc_small_image_text += f'{line}{line_suffix} '
+                rpc_large_image_text += f'{line}{line_suffix} '
+                """
+                rpc_large_image_text += f'{line}{(line_limit - len(line) - sum(_.isupper() for _ in line))*xchar} '
 
-            for line_key in large_image_lines:
-                line = f'{large_image_lines[line_key]} '
-                if len(large_image_lines) == 1:
-                    rpc_large_image_text = line
-                else:
-                    """
-                    line_suffix = "" if len(line) > 20 else (line_limit - len(line) - sum(_.isupper() for _ in line))*xchar
-                    rpc_large_image_text += f'{line}{line_suffix} '
-                    """
-                    rpc_large_image_text += f'{line}{(line_limit - len(line) - sum(_.isupper() for _ in line))*xchar} '
+        # if the text is too long, cut it
+        if len(rpc_small_image_text) > 128:
+            rpc_small_image_text = rpc_small_image_text.replace(xchar,'')
+        if len(rpc_large_image_text) > 128:
+            rpc_large_image_text = rpc_large_image_text.replace(xchar,'')
 
-            # if the text is too long, cut it
-            if len(rpc_small_image_text) > 128:
-                rpc_small_image_text = rpc_small_image_text.replace(xchar,'')
-            if len(rpc_large_image_text) > 128:
-                rpc_large_image_text = rpc_large_image_text.replace(xchar,'')
+        update_assets = {
+            'details': title,
+            'buttons': rpc_buttons,
+            'small_image': rpc_small_image,
+            'small_text': rpc_small_image_text,
+            'large_text': rpc_large_image_text,
+            # situation-dependent assets
+            'large_image': 'artwork' if not time_remaining_bool and not album_bool else artwork,
+            'state': track_artist_album if time_remaining_bool and not album_bool else artist,
+            'end': time_remaining + self.start_time if time_remaining_bool else None}
 
-            update_assets = {
-                'details': title,
-                'buttons': rpc_buttons,
-                'small_image': rpc_small_image,
-                'small_text': rpc_small_image_text,
-                'large_text': rpc_large_image_text,
-                # situation-dependent assets
-                'large_image': 'artwork' if not time_remaining_bool and not album_bool else artwork,
-                'state': track_artist_album if time_remaining_bool and not album_bool else artist,
-                'end': time_remaining + self.start_time if time_remaining_bool else None}
-
-            """
-            # logging
-            if time_remaining_bool:
-                if album_bool:
-                    print('Updating status with album, time remaining.')
-                else:
-                    print('Updating status without album, time remaining.')
+        """
+        # logging
+        if time_remaining_bool:
+            if album_bool:
+                print('Updating status with album, time remaining.')
             else:
-                if album_bool:
-                    print('Updating status with album, no time remaining')
-                else:
-                    print('Updating status without album, no time remaining')
-            """
+                print('Updating status without album, time remaining.')
+        else:
+            if album_bool:
+                print('Updating status with album, no time remaining')
+            else:
+                print('Updating status without album, no time remaining')
+        """
 
-            if self.RPC:
-                try:
-                    self.RPC.update(**update_assets)
-                except Exception as e:
-                    logging.error(f'Error updating RPC: {e}')
+        if self.RPC:
+            try:
+                self.RPC.update(**update_assets)
+            except Exception as e:
+                logging.error(f'Error updating RPC: {e}')
