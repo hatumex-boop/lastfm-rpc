@@ -104,6 +104,28 @@ class DiscordRPC:
             
         return result_text
 
+    def _prepare_artwork_status(self, artwork, artist_count, library_data):
+        """Handles artwork fallback and library scrobble counts."""
+        large_image_lines = {}
+        
+        # artwork
+        if artwork is None:
+            # if there is no artwork, use the default one
+            now = datetime.datetime.now()
+            #day: false, night: true
+            is_day = now.hour >= 18 or now.hour < 9 
+            artwork = DAY_MODE_COVER if is_day else NIGHT_MODE_COVER
+            large_image_lines['theme'] = f"{'Night' if is_day else 'Day'} Mode Cover"
+
+        if artist_count:
+            # if the artist is in the library
+            track_count = library_data["track_count"]
+            large_image_lines["artist_scrobbles"] = f'Scrobbles: {artist_count}/{track_count}' if track_count else f'Scrobbles: {artist_count}'
+        else:
+            large_image_lines['first_time'] = 'First time listening!'
+            
+        return artwork, large_image_lines
+
     def update_status(self, track, title, artist, album, time_remaining, username, artwork):
         """
         for _ in [track, title, artist, album, time_remaining, username, artwork]:
@@ -151,30 +173,14 @@ class DiscordRPC:
         rpc_small_image = user_data["avatar_url"]
         artist_count = library_data["artist_count"]
 
-        large_image_lines = {}
         small_image_lines = {
             'name':         f"{user_display_name} (@{username})",
             "scrobbles":    f'Scrobbles: {scrobbles}',
             "artists":      f'Artists: {artists}',
             "loved_tracks": f'Loved Tracks: {loved_tracks}'}
 
-        # artwork
-        if artwork is None:
-            # if there is no artwork, use the default one
-            now = datetime.datetime.now()
-            #day: false, night: true
-            is_day = now.hour >= 18 or now.hour < 9 
-            artwork = DAY_MODE_COVER if is_day else NIGHT_MODE_COVER
-            large_image_lines['theme'] = f"{'Night' if is_day else 'Day'} Mode Cover"
-        else:
-            pass
-
-        if artist_count:
-            # if the artist is in the library
-            track_count = library_data["track_count"]
-            large_image_lines["artist_scrobbles"] = f'Scrobbles: {artist_count}/{track_count}' if track_count else f'Scrobbles: {artist_count}'
-        else:
-            large_image_lines['first_time'] = 'First time listening!'
+        # Handle artwork and large image lines via helper
+        artwork, large_image_lines = self._prepare_artwork_status(artwork, artist_count, library_data)
 
         # Call the helper for text processing
         rpc_small_image_text = self._format_image_text(small_image_lines, RPC_LINE_LIMIT, RPC_XCHAR)
