@@ -14,34 +14,30 @@ class ColoredFormatter(logging.Formatter):
         'CRITICAL': '\033[1;37;41m',   # White on Red background
     }
     
-    # Emojis for each level
-    LEVEL_ICONS = {
-        'DEBUG': '🐛',
-        'INFO': '🚀',
-        'WARNING': '⚠️ ',
-        'ERROR': '🚨',
-        'CRITICAL': '🔥',
+    # Symbols for each level
+    LEVEL_SYMBOLS = {
+        'DEBUG': '[#]',
+        'INFO': '[+]',
+        'WARNING': '[!]',
+        'ERROR': '[-]',
+        'CRITICAL': '[X]',
     }
     
     RESET = '\033[0m'
     BOLD = '\033[1m'
 
     def format(self, record):
-        # Determine color and icon
+        # Determine color and symbol
         level_color = self.COLORS.get(record.levelname, self.RESET)
-        level_icon = self.LEVEL_ICONS.get(record.levelname, '•')
+        level_symbol = self.LEVEL_SYMBOLS.get(record.levelname, '[•]')
         
         # Format timestamp safely
         time_str = self.formatTime(record, "%H:%M:%S")
         
         # Color certain parts of the message for better scanning
-        # 1. Level Name (bold)
-        # 2. Main message
-        
         log_fmt = (
             f"{self.COLORS['DEBUG']}[{time_str}]{self.RESET} "
-            f"{level_color}{self.BOLD}{record.levelname:<8}{self.RESET} "
-            f"{level_icon} "
+            f"{level_color}{self.BOLD}{level_symbol} {record.levelname:<8}{self.RESET} "
             f"- {record.getMessage()}"
         )
         
