@@ -61,10 +61,9 @@ def parse_user_header_status(page_content):
     header_status = [0, 0, 0]
     try:
         headers = page_content.find_all("div", {"class": "header-metadata-display"})
-        for i in range(len(headers)):
-            header_status[i] = headers[i].text.strip()
-            
-            header_status[i] = get_removal(header_status[i],',', int)
+        for i in range(min(len(headers), 3)):
+            cleaned_text = headers[i].text.strip()
+            header_status[i] = get_removal(cleaned_text, ',', int)
     except Exception as e:
         logger.error(f"Error parsing user header status: {e}")
     return header_status

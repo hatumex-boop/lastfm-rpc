@@ -16,6 +16,7 @@ from constants.project import (
     TRACK_CHECK_INTERVAL, UPDATE_INTERVAL,
     LASTFM_USER_URL
 )
+from utils.string_utils import messenger
 from api.lastfm.user.tracking import User
 from api.discord.rpc import DiscordRPC
 

@@ -10,12 +10,12 @@ network = pylast.LastFMNetwork(API_KEY, API_SECRET)
 class User:
     def __init__(self, username, cooldown=DEFAULT_COOLDOWN):
         self.username = username
-        self.user = network.get_user(username)
+        self.lastfm_user = network.get_user(username)
         self.cooldown = cooldown
 
     def _get_current_track(self):
         try:
-            return self.user.get_now_playing()
+            return self.lastfm_user.get_now_playing()
         except pylast.WSError:
             logger.error(TRANSLATIONS['pylast_ws_error'].format(self.cooldown))
         except pylast.NetworkError:
