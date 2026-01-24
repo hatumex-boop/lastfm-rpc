@@ -137,8 +137,24 @@ class App:
                     formatted_track = f"{artist} - {title}"
                     new_track_display = messenger('now_playing', formatted_track)
                     
-                    # 1. First update the status and internal variables
-                    self.rpc.enable()
+                    # 1. Update internal state and UI IMMEDIATELY
+                    # Connection check happens very fast
+                    self.rpc.enable() 
+                    
+                    has_track_changed = self.current_track_name != new_track_display
+                    has_conn_changed = self._rpc_connected != self.rpc.is_connected
+                    
+                    if has_track_changed or has_conn_changed:
+                        self.current_track_name = new_track_display
+                        self._rpc_connected = self.rpc.is_connected
+                        
+                        logger.info(f"Status: {self.current_track_name} | Discord: {self._rpc_connected}")
+                        
+                        # Update tooltip info instantly
+                        self.icon_tray.title = f"{APP_NAME}\n{new_track_display}"
+                    
+                    # 2. Now perform the heavy status update in the background (within the loop)
+                    # This won't block the UI state we just set
                     self.rpc.update_status(
                         str(current_track),
                         str(title),
@@ -149,20 +165,7 @@ class App:
                         artwork
                     )
 
-                    # 2. Check if we need to refresh the tray menu or title
-                    # We check: track name change OR connection status change OR scrobble count change
-                    has_track_changed = self.current_track_name != new_track_display
-                    has_conn_changed = self._rpc_connected != self.rpc.is_connected
-                    
-                    if has_track_changed or has_conn_changed:
-                        self.current_track_name = new_track_display
-                        self._rpc_connected = self.rpc.is_connected
-                        
-                        logger.info(f"Status: {self.current_track_name} | Discord: {self._rpc_connected}")
-                        
-                        # Update tooltip info (safer than replacing the whole menu)
-                        self.icon_tray.title = f"{APP_NAME}\n{new_track_display}"
-                    else:
+                    if not (has_track_changed or has_conn_changed):
                         logger.debug(f"Polling: {formatted_track}")
                     
                     time.sleep(TRACK_CHECK_INTERVAL)
