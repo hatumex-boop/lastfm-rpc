@@ -1,13 +1,13 @@
 import datetime
-import time
 import logging
 
 from api.lastfm.user.library import get_library_data
 from api.lastfm.user.profile import get_user_data
-from pypresence import Presence, exceptions
+from pypresence.presence import Presence
+from pypresence import exceptions
 from utils.url_utils import url_encoder
 from constants.project import (
-    CLIENT_ID, RETRY_INTERVAL, 
+    CLIENT_ID, 
     DAY_MODE_COVER, NIGHT_MODE_COVER,
     RPC_LINE_LIMIT, RPC_XCHAR,
     LASTFM_TRACK_URL_TEMPLATE, YT_MUSIC_SEARCH_TEMPLATE
@@ -51,7 +51,7 @@ class DiscordRPC:
         
         Clears the current RPC state, closes the connection, and updates state variables.
         """
-        if not self._disabled:
+        if not self._disabled and self.RPC:
             self.RPC.clear()  # Clear the current RPC state
             self.RPC.close()  # Close the connection to Discord
             logging.info('Disconnected from Discord due to inactivity on Last.fm')
@@ -103,7 +103,7 @@ class DiscordRPC:
             self.last_track = track
             track_artist_album = f'{artist} - {album}'
 
-            rpcButtons = [
+            rpc_buttons = [
                 {"label": "View Track", "url": str(LASTFM_TRACK_URL_TEMPLATE.format(username=username, artist=url_encoder(artist), title=url_encoder(title)))},
                 {"label": "Search on YouTube Music", "url": str(YT_MUSIC_SEARCH_TEMPLATE.format(query=url_encoder(album)))},
                 #{"label": "Search on Spotify", "url": str(SPOTIFY_SEARCH_TEMPLATE.format(query=url_encoder(album)))},
@@ -131,7 +131,7 @@ class DiscordRPC:
                 "loved_tracks": f'Loved Tracks: {loved_tracks}'}
 
             # artwork
-            if artwork == None:
+            if artwork is None:
                 # if there is no artwork, use the default one
                 now = datetime.datetime.now()
                 #day: false, night: true
@@ -146,7 +146,7 @@ class DiscordRPC:
                 track_count = library_data["track_count"]
                 large_image_lines["artist_scrobbles"] = f'Scrobbles: {artist_count}/{track_count}' if track_count else f'Scrobbles: {artist_count}'
             else:
-                large_image_lines['first_time'] = f'First time listening!'
+                large_image_lines['first_time'] = 'First time listening!'
 
             # line process
             rpc_small_image_text = ''
@@ -163,7 +163,8 @@ class DiscordRPC:
 
             for line_key in large_image_lines:
                 line = f'{large_image_lines[line_key]} '
-                if len(large_image_lines) == 1: rpc_large_image_text = line
+                if len(large_image_lines) == 1:
+                    rpc_large_image_text = line
                 else:
                     """
                     line_suffix = "" if len(line) > 20 else (line_limit - len(line) - sum(_.isupper() for _ in line))*xchar
@@ -179,7 +180,7 @@ class DiscordRPC:
 
             update_assets = {
                 'details': title,
-                'buttons': rpcButtons,
+                'buttons': rpc_buttons,
                 'small_image': rpc_small_image,
                 'small_text': rpc_small_image_text,
                 'large_text': rpc_large_image_text,
@@ -202,7 +203,8 @@ class DiscordRPC:
                     print('Updating status without album, no time remaining')
             """
 
-            try:
-                self.RPC.update(**update_assets)
-            except Exception as e:
-                logging.error(f'Error updating RPC: {e}')
+            if self.RPC:
+                try:
+                    self.RPC.update(**update_assets)
+                except Exception as e:
+                    logging.error(f'Error updating RPC: {e}')
