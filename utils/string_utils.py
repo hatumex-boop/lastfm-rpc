@@ -1,8 +1,10 @@
 from constants.project import TRANSLATIONS
 
-def messenger(key, f=None):
+def messenger(key, *args):
     try:
-        return TRANSLATIONS[key].format(str(f)) if f else TRANSLATIONS[key]
+        if not args:
+            return TRANSLATIONS[key]
+        return TRANSLATIONS[key].format(*(str(arg) for arg in args))
     except Exception as e:
         raise Exception(f'Error in messenger: {e}')
 
