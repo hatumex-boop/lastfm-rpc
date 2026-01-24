@@ -15,6 +15,7 @@ EN:
   user: "User: {}"
   now_playing: "Now Playing: {}"
   no_track: "No track playing"
+  debug_mode: "Debug Mode"
 TR:
   pylast_ws_error: "Web servisinde bağlantı sorunu oluştu, bağlantı {} saniye sonra yeniden deneniyor."
   pylast_network_error: "Uygulama Last.fm sunucularıyla iletişim kuramadı, internet bağlantınızı kontrol edin!"
@@ -32,3 +33,4 @@ TR:
   user: "Kullanıcı: {}"
   now_playing: "Şu An Çalıyor: {}"
   no_track: "Çalan şarkı yok"
+  debug_mode: "Hata Ayıklama Modu"

@@ -24,6 +24,7 @@ class App:
     def __init__(self):
         self.rpc = DiscordRPC()
         self.current_track_name = messenger('no_track')
+        self.debug_enabled = logging.getLogger().getEffectiveLevel() == logging.DEBUG
         self.icon_tray = self.setup_tray_icon()
         self.loop = asyncio.new_event_loop()
         self.rpc_thread = threading.Thread(target=self.run_rpc, args=(self.loop,))
@@ -34,6 +35,18 @@ class App:
         logging.info("Exiting application.")
         icon.stop()
         sys.exit()
+
+    def toggle_debug(self, icon, item):
+        """Toggles between DEBUG and INFO logging levels."""
+        self.debug_enabled = not self.debug_enabled
+        new_level = logging.DEBUG if self.debug_enabled else logging.INFO
+        logging.getLogger().setLevel(new_level)
+        
+        # Also update for existing handlers if necessary (though usually inherited)
+        for handler in logging.getLogger().handlers:
+            handler.setLevel(new_level)
+            
+        logging.info(f"Logging level set to: {'DEBUG' if self.debug_enabled else 'INFO'}")
 
     def open_profile(self, icon, item):
         """Opens the user's Last.fm profile in the default browser."""
@@ -65,6 +78,7 @@ class App:
             MenuItem(messenger('user', USERNAME), self.open_profile),
             MenuItem(lambda item: self.current_track_name, None, enabled=False),
             Menu.SEPARATOR,
+            MenuItem(messenger('debug_mode'), self.toggle_debug, checked=lambda item: self.debug_enabled),
             MenuItem(messenger('exit'), self.exit_app)
         )
 
