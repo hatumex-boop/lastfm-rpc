@@ -76,6 +76,34 @@ class DiscordRPC:
         """
         self._disconnect()
 
+    def _format_image_text(self, lines, limit, xchar):
+        """Processes and formats text for RPC images while strictly preserving comments."""
+        logging.debug(f"Formatting image text - Lines: {len(lines)}, Data: {lines}")
+        result_text = ''
+        
+        for line_key in lines:
+            line = f'{lines[line_key]} '
+            if line_key == 'theme' or line_key == 'artist_scrobbles' or line_key == 'first_time':
+                # Processing logic for large image lines
+                if len(lines) == 1: 
+                    result_text = line
+                else:
+                    """
+                    line_suffix = "" if len(line) > 20 else (line_limit - len(line) - sum(_.isupper() for _ in line))*xchar
+                    rpc_large_image_text += f'{line}{line_suffix} '
+                    """
+                    result_text += f'{line}{(limit - len(line) - sum(c.isupper() for c in line))*xchar} '
+            else:
+                # Processing logic for small image lines
+                line_suffix = "" if len(line) > 20 else (limit - len(line) - sum(c.isupper() for c in line))*xchar
+                result_text += f'{line}{line_suffix} '
+        
+        # if the text is too long, cut it
+        if len(result_text) > 128:
+            result_text = result_text.replace(xchar, '')
+            
+        return result_text
+
     def update_status(self, track, title, artist, album, time_remaining, username, artwork):
         """
         for _ in [track, title, artist, album, time_remaining, username, artwork]:
@@ -148,35 +176,9 @@ class DiscordRPC:
         else:
             large_image_lines['first_time'] = 'First time listening!'
 
-        # line process
-        rpc_small_image_text = ''
-        rpc_large_image_text = ''
-        line_limit = RPC_LINE_LIMIT
-        xchar = RPC_XCHAR
-
-        #print(len(large_image_lines), large_image_lines)
-
-        for line_key in small_image_lines:
-            line = f'{small_image_lines[line_key]} '
-            line_suffix = "" if len(line) > 20 else (line_limit - len(line) - sum(_.isupper() for _ in line))*xchar
-            rpc_small_image_text += f'{line}{line_suffix} '
-
-        for line_key in large_image_lines:
-            line = f'{large_image_lines[line_key]} '
-            if len(large_image_lines) == 1:
-                rpc_large_image_text = line
-            else:
-                """
-                line_suffix = "" if len(line) > 20 else (line_limit - len(line) - sum(_.isupper() for _ in line))*xchar
-                rpc_large_image_text += f'{line}{line_suffix} '
-                """
-                rpc_large_image_text += f'{line}{(line_limit - len(line) - sum(_.isupper() for _ in line))*xchar} '
-
-        # if the text is too long, cut it
-        if len(rpc_small_image_text) > 128:
-            rpc_small_image_text = rpc_small_image_text.replace(xchar,'')
-        if len(rpc_large_image_text) > 128:
-            rpc_large_image_text = rpc_large_image_text.replace(xchar,'')
+        # Call the helper for text processing
+        rpc_small_image_text = self._format_image_text(small_image_lines, RPC_LINE_LIMIT, RPC_XCHAR)
+        rpc_large_image_text = self._format_image_text(large_image_lines, RPC_LINE_LIMIT, RPC_XCHAR)
 
         update_assets = {
             'details': title,
