@@ -91,8 +91,9 @@ class App:
         ]
 
         # Add Artist Scrobbles if available
-        if self.rpc.current_artist and self.rpc.artist_scrobbles > 0:
-            stats_text = messenger('artist_scrobbles', [self.rpc.current_artist, self.rpc.artist_scrobbles])
+        if self.rpc.current_artist:
+            count = self.rpc.artist_scrobbles if self.rpc.artist_scrobbles else "..."
+            stats_text = messenger('artist_scrobbles', [self.rpc.current_artist, count])
             menu_items.append(MenuItem(stats_text, None, enabled=False))
 
         menu_items.append(MenuItem(messenger('discord_status', status_detail), None, enabled=False))
@@ -180,6 +181,12 @@ class App:
         
         logger.info("Starting system tray icon...")
         try:
+            # Show a notification when the icon starts
+            self.icon_tray.visible = True
+            self.icon_tray.notify(
+                messenger('starting_rpc'),
+                messenger('user', USERNAME)
+            )
             self.icon_tray.run()
         except Exception as e:
             logger.error(f"System tray icon failed to run: {e}", exc_info=True)

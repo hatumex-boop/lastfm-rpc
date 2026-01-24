@@ -1,17 +1,23 @@
 from constants.project import TRANSLATIONS
 
 def messenger(key, *args):
+    """
+    Retrieves a translation and formats it with provided arguments.
+    Supports both variadic arguments and a single list/tuple collection.
+    """
     try:
         if not args:
             return TRANSLATIONS[key]
         
-        # If the first arg is a list or tuple and it's the only arg, unpack it
-        if len(args) == 1 and isinstance(args[0], (list, tuple)):
-            args = args[0]
-            
-        return TRANSLATIONS[key].format(*(str(arg) for arg in args))
+        # Unpack if passed as a single collection
+        actual_args = args[0] if len(args) == 1 and isinstance(args[0], (list, tuple)) else args
+        return TRANSLATIONS[key].format(*(str(arg) for arg in actual_args))
+    except (KeyError, IndexError, ValueError, TypeError) as e:
+        logger.error(f'Translation error for key "{key}": {e}')
+        return f"[{key}]"
     except Exception as e:
-        raise Exception(f'Error in messenger: {e}')
+        logger.error(f'Unexpected error in messenger: {e}')
+        return f"[{key}]"
 
 
 def get_removal(inside_obj, find_obj=' ', return_type=None):
