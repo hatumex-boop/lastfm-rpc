@@ -13,6 +13,8 @@ from constants.project import (
     LASTFM_TRACK_URL_TEMPLATE, YT_MUSIC_SEARCH_TEMPLATE
 )
 
+logger = logging.getLogger('rpc')
+
 class DiscordRPC:
     def __init__(self):
         """
@@ -37,13 +39,13 @@ class DiscordRPC:
                     self.RPC = Presence(CLIENT_ID)
                 
                 self.RPC.connect()
-                logging.info('Connected with Discord')
+                logger.info('Connected with Discord')
                 self._enabled = True
                 self._disabled = False
             except exceptions.DiscordNotFound:
-                logging.warning('Discord not found, will retry in next cycle')
+                logger.warning('Discord not found, will retry in next cycle')
             except Exception as e:
-                logging.error(f'Error connecting to Discord: {e}')
+                logger.error(f'Error connecting to Discord: {e}')
 
     def _disconnect(self):
         """
@@ -54,7 +56,7 @@ class DiscordRPC:
         if not self._disabled and self.RPC:
             self.RPC.clear()  # Clear the current RPC state
             self.RPC.close()  # Close the connection to Discord
-            logging.info('Disconnected from Discord due to inactivity on Last.fm')
+            logger.info('Disconnected from Discord due to inactivity on Last.fm')
             self._disabled = True
             self._enabled = False
 
@@ -78,7 +80,7 @@ class DiscordRPC:
 
     def _format_image_text(self, lines, limit, xchar):
         """Processes and formats text for RPC images while strictly preserving comments."""
-        logging.debug(f"Formatting image text - Lines: {len(lines)}, Data: {lines}")
+        logger.debug(f"Format Text: {list(lines.keys())}")
         result_text = ''
         
         for line_key in lines:
@@ -141,7 +143,7 @@ class DiscordRPC:
         ]
 
     def update_status(self, track, title, artist, album, time_remaining, username, artwork):
-        logging.debug(f"Update: track={track}, title={title}, artist={artist}, album={album}, time={time_remaining}")
+        # logger.debug(f"Update: track={track}, title={title}, artist={artist}, album={album}, time={time_remaining}")
 
         if len(title) < 2:
             title = title + ' '
@@ -156,7 +158,7 @@ class DiscordRPC:
         if time_remaining_bool:
             time_remaining = float(str(time_remaining)[0:3])
 
-        logging.info(f'Album: {album} | Time Remaining: {time_remaining_bool} - {time_remaining} | Now Playing: {track}')
+        logger.info(f'Album: {album} | Time Remaining: {time_remaining_bool} - {time_remaining} | Now Playing: {track}')
 
         self.start_time = datetime.datetime.now().timestamp()
         self.last_track = track
@@ -165,19 +167,19 @@ class DiscordRPC:
         # 1. Fetch Data
         user_data = get_user_data(username)
         if not user_data:
-            logging.error(f"User data not found for {username}")
+            logger.error(f"User data not found for {username}")
             return
         
-        logging.info(f"User data found for {username}")
-        logging.debug(f"User data: {user_data}")
+        logger.info(f"User data found for {username}")
+        logger.debug(f"User data: {user_data}")
 
         library_data = get_library_data(username, artist, title)
         if not library_data:
-            logging.error(f"Library data not found for {username}")
+            logger.error(f"Library data not found for {username}")
             return
         
-        logging.info(f"Library data found for {username}")
-        logging.debug(f"Library data: {library_data}")
+        logger.info(f"Library data found for {username}")
+        logger.debug(f"Library data: {library_data}")
 
         # 2. Prepare Display Data
         rpc_buttons = self._prepare_buttons(username, artist, title, album)
@@ -213,19 +215,12 @@ class DiscordRPC:
             'end': time_remaining + self.start_time if time_remaining_bool else None}
 
         # logging
-        if time_remaining_bool:
-            if album_bool:
-                logging.debug('Updating status with album, time remaining.')
-            else:
-                logging.debug('Updating status without album, time remaining.')
-        else:
-            if album_bool:
-                logging.debug('Updating status with album, no time remaining')
-            else:
-                logging.debug('Updating status without album, no time remaining')
+        state = 'with album' if album_bool else 'without album'
+        time_state = 'time' if time_remaining_bool else 'no time'
+        logger.debug(f'Update state: {state}, {time_state}')
 
         if self.RPC:
             try:
                 self.RPC.update(**update_assets)
             except Exception as e:
-                logging.error(f'Error updating RPC: {e}')
+                logger.error(f'Error updating RPC: {e}')

@@ -3,6 +3,8 @@ import logging
 import pylast
 from constants.project import API_KEY, API_SECRET, TRANSLATIONS, DEFAULT_COOLDOWN
 
+logger = logging.getLogger('lastfm')
+
 network = pylast.LastFMNetwork(API_KEY, API_SECRET)
 
 class User:
@@ -15,11 +17,11 @@ class User:
         try:
             return self.user.get_now_playing()
         except pylast.WSError:
-            logging.error(TRANSLATIONS['pylast_ws_error'].format(self.cooldown))
+            logger.error(TRANSLATIONS['pylast_ws_error'].format(self.cooldown))
         except pylast.NetworkError:
-            logging.error(TRANSLATIONS['pylast_network_error'])
+            logger.error(TRANSLATIONS['pylast_network_error'])
         except pylast.MalformedResponseError:
-            logging.error(TRANSLATIONS['pylast_malformed_response_error'])
+            logger.error(TRANSLATIONS['pylast_malformed_response_error'])
         return None
 
     def _get_track_info(self, current_track):
@@ -32,9 +34,9 @@ class User:
                 artwork = album.get_cover_image()
             time_remaining = current_track.get_duration()
         except pylast.WSError as e:
-            logging.error(f'pylast.WSError: {e}')
+            logger.error(f'pylast.WSError: {e}')
         except pylast.NetworkError:
-            logging.error(TRANSLATIONS['pylast_network_error'])
+            logger.error(TRANSLATIONS['pylast_network_error'])
         return title, artist, album, artwork, time_remaining
 
     def now_playing(self):
@@ -42,5 +44,5 @@ class User:
         if current_track:
             return current_track, self._get_track_info(current_track)
         else:
-            logging.info(TRANSLATIONS['no_song'].format(self.cooldown))
+            logger.debug(TRANSLATIONS['no_song'].format(self.cooldown))
             return current_track, None

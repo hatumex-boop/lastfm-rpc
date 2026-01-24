@@ -5,6 +5,8 @@ from constants.project import DEFAULT_AVATAR_ID, LASTFM_USER_URL
 from utils.request_utils import get_response, get_dom
 from utils.string_utils import get_removal
 
+logger = logging.getLogger('profile')
+
 def parse_user_display_name(page_content):
     """
     Parses the user's display name from the page content.
@@ -19,7 +21,7 @@ def parse_user_display_name(page_content):
         display_name = page_content.find("span", {"class": "header-title-display-name"})
         return display_name.text.strip() if display_name else None
     except Exception as e:
-        logging.error(f"Error parsing user display name: {e}")
+        logger.error(f"Error parsing user display name: {e}")
         return None
 
 def parse_user_avatar_url(page_content):
@@ -42,7 +44,7 @@ def parse_user_avatar_url(page_content):
             return None
         return user_avatar_url
     except Exception as e:
-        logging.error(f"Error parsing user avatar URL: {e}")
+        logger.error(f"Error parsing user avatar URL: {e}")
         return None
 
 def parse_user_header_status(page_content):
@@ -64,7 +66,7 @@ def parse_user_header_status(page_content):
             
             header_status[i] = get_removal(header_status[i],',', int)
     except Exception as e:
-        logging.error(f"Error parsing user header status: {e}")
+        logger.error(f"Error parsing user header status: {e}")
     return header_status
 
 def get_user_data(username) -> dict:
@@ -87,8 +89,8 @@ def get_user_data(username) -> dict:
             "avatar_url": parse_user_avatar_url(dom),
             "header_status": parse_user_header_status(dom)
         }
-        logging.info(f"User data retrieved successfully for {username}")
+        logger.debug(f"User data retrieved successfully for {username}")
         return data
     else:
-        logging.error(f"Failed to retrieve user data for {username}, status code: {response.status_code}")
+        logger.error(f"Failed to retrieve user data for {username}, status code: {response.status_code}")
         return {}

@@ -16,9 +16,10 @@ from constants.project import (
     TRACK_CHECK_INTERVAL, UPDATE_INTERVAL,
     LASTFM_USER_URL
 )
-from utils.string_utils import messenger
 from api.lastfm.user.tracking import User
 from api.discord.rpc import DiscordRPC
+
+logger = logging.getLogger('app')
 
 class App:
     def __init__(self):
@@ -32,7 +33,7 @@ class App:
 
     def exit_app(self, icon, item):
         """Stops the system tray icon and exits the application."""
-        logging.info("Exiting application.")
+        logger.info("Exiting application.")
         icon.stop()
         sys.exit()
 
@@ -46,13 +47,13 @@ class App:
         for handler in logging.getLogger().handlers:
             handler.setLevel(new_level)
             
-        logging.info(f"Logging level set to: {'DEBUG' if self.debug_enabled else 'INFO'}")
+        logger.info(f"Logging level set to: {'DEBUG' if self.debug_enabled else 'INFO'}")
 
     def open_profile(self, icon, item):
         """Opens the user's Last.fm profile in the default browser."""
         url = LASTFM_USER_URL.format(username=USERNAME)
         webbrowser.open(url)
-        logging.info(f"Opened Last.fm profile: {url}")
+        logger.info(f"Opened Last.fm profile: {url}")
 
     def get_directory(self):
         """Returns the project root directory."""
@@ -96,14 +97,13 @@ class App:
 
     def run_rpc(self, loop):
         """Runs the RPC updater in a loop."""
-        logging.info(messenger('starting_rpc'))
+        logger.info(messenger('starting_rpc'))
         asyncio.set_event_loop(loop)
         user = User(USERNAME)
 
         while True:
             try:
                 current_track, data = user.now_playing()
-                logging.debug(f"Last.fm Check - Track: {current_track}, Data identified: {data is not None}")
                 
                 if data:
                     title, artist, album, artwork, time_remaining = data
@@ -112,9 +112,12 @@ class App:
                     
                     if self.current_track_name != new_track_display:
                         self.current_track_name = new_track_display
-                        logging.info(f"Status: {self.current_track_name}")
+                        logger.info(f"Status: {self.current_track_name}")
                         # Force menu refresh
-                        self.icon_tray.menu = self.setup_tray_menu()
+                        self.icon_tray.menu = self.setup_tray_icon()
+                    else:
+                        # Less noisy polling log for the same track
+                        logger.debug(f"Polling: {formatted_track}")
                     
                     self.rpc.enable()
                     self.rpc.update_status(
@@ -130,11 +133,11 @@ class App:
                 else:
                     if self.current_track_name != messenger('no_track'):
                         self.current_track_name = messenger('no_track')
-                        logging.info("Tray Update: No track detected")
+                        logger.info("Tray Update: No track detected")
                         self.icon_tray.menu = self.setup_tray_menu()
                     self.rpc.disable()
             except Exception as e:
-                logging.error(f"Unexpected error in RPC loop: {e}", exc_info=True)
+                logger.error(f"Unexpected error in RPC loop: {e}", exc_info=True)
             time.sleep(UPDATE_INTERVAL)
 
     def run(self):

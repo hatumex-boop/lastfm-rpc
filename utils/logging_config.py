@@ -84,5 +84,6 @@ def setup_logging(level=logging.INFO):
     logging.getLogger("pypresence").setLevel(logging.WARNING)
     logging.getLogger("urllib3").setLevel(logging.WARNING)
     logging.getLogger("pystray").setLevel(logging.WARNING)
+    logging.getLogger("asyncio").setLevel(logging.WARNING)
 
     return logger
