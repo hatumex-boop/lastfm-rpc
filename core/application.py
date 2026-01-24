@@ -87,6 +87,7 @@ class App:
 
     def _get_dynamic_artist_stats(self, item):
         """Returns the current artist scrobble stats for the menu."""
+        # logger.debug(f"Menu stats check: Artist={self.rpc.current_artist}, Scrobbles={self.rpc.artist_scrobbles}")
         if self.rpc.current_artist:
             count = self.rpc.artist_scrobbles if self.rpc.artist_scrobbles is not None else "..."
             return messenger('artist_scrobbles', [self.rpc.current_artist, count])
@@ -170,6 +171,10 @@ class App:
                         USERNAME,
                         artwork
                     )
+                    
+                    # 3. Refresh menu again after stats are fetched to show scrobbles
+                    if has_track_changed or has_conn_changed:
+                        self.icon_tray.menu = self.setup_tray_menu()
                     
                     time.sleep(TRACK_CHECK_INTERVAL)
                 else:
