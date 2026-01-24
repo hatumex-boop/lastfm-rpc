@@ -30,14 +30,19 @@ def load_config(config_path: str = "config.yaml") -> Tuple[str, str, str, str]:
     """
     config = load_yaml_file(config_path)
     try:
-        username = config['USER']['USERNAME']
-        api_key = config['API']['KEY']
-        api_secret = config['API']['SECRET']
-        app_lang = config['APP']['LANG']
-        logging.info("API key and secret key have been successfully loaded from the config file.")
+        username = config.get('USER', {}).get('USERNAME')
+        api_key = config.get('API', {}).get('KEY')
+        api_secret = config.get('API', {}).get('SECRET')
+        app_lang = config.get('APP', {}).get('LANG', 'EN')
+
+        if not all([username, api_key, api_secret]):
+            logging.error("Configuration incomplete. Please check USERNAME, API KEY, and API SECRET in config.yaml.")
+            sys.exit(1)
+            
+        logging.info("Configuration loaded successfully.")
         return username, api_key, api_secret, app_lang
-    except KeyError as e:
-        logging.error(f"Configuration file missing key: {e}")
+    except Exception as e:
+        logging.error(f"Error validating configuration: {e}")
         sys.exit(1)
 
 def load_translations(app_lang: str, translations_path: str) -> Dict[str, str]:
