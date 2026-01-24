@@ -126,11 +126,23 @@ class DiscordRPC:
             
         return artwork, large_image_lines
 
+    def _prepare_buttons(self, username, artist, title, album):
+        """
+        Compiles the RPC buttons.
+        
+        Alternative button templates for future use:
+        - Spotify: {"label": "Search on Spotify", "url": str(SPOTIFY_SEARCH_TEMPLATE.format(query=url_encoder(album)))}
+        - track_url: {"label": "View Track", "url": str(f"https://www.last.fm/music/{url_encoder(artist)}/{url_encoder(title)}")}
+        - user_url: {"label": "View Last.fm Profile", "url": str(LASTFM_USER_URL.format(username=username))}
+        """
+        return [
+            {"label": "View Track", "url": str(LASTFM_TRACK_URL_TEMPLATE.format(username=username, artist=url_encoder(artist), title=url_encoder(title)))},
+            {"label": "Search on YouTube Music", "url": str(YT_MUSIC_SEARCH_TEMPLATE.format(query=url_encoder(album)))}
+        ]
+
     def update_status(self, track, title, artist, album, time_remaining, username, artwork):
-        """
         for _ in [track, title, artist, album, time_remaining, username, artwork]:
-            print(_)
-        """
+            logging.debug(f"RPC variable: {_}")
 
         if len(title) < 2:
             title = title + ' '
@@ -153,24 +165,21 @@ class DiscordRPC:
         self.last_track = track
         track_artist_album = f'{artist} - {album}'
 
-        rpc_buttons = [
-            {"label": "View Track", "url": str(LASTFM_TRACK_URL_TEMPLATE.format(username=username, artist=url_encoder(artist), title=url_encoder(title)))},
-            {"label": "Search on YouTube Music", "url": str(YT_MUSIC_SEARCH_TEMPLATE.format(query=url_encoder(album)))},
-            #{"label": "Search on Spotify", "url": str(SPOTIFY_SEARCH_TEMPLATE.format(query=url_encoder(album)))},
-            #{"label": "View Track", "url": str(f"https://www.last.fm/music/{url_encoder(artist)}/{url_encoder(title)}")}
-            #{"label": "View Last.fm Profile", "url": str(LASTFM_USER_URL.format(username=username))}
-        ]
+        # Prepare Buttons via helper
+        rpc_buttons = self._prepare_buttons(username, artist, title, album)
 
+        # Get User and Library Data
         user_data = get_user_data(username)
+        if not user_data:
+            return
+
         #print(json.dumps(user_data, indent=2))
-
-        user_display_name = user_data["display_name"]
-        scrobbles, artists, loved_tracks = user_data["header_status"] # unpacking
-
         library_data = get_library_data(username, artist, title)
         #print(json.dumps(library_data, indent=2))
 
-        rpc_small_image = user_data["avatar_url"]
+        # Unpack User Info
+        user_display_name = user_data["display_name"]
+        scrobbles, artists, loved_tracks = user_data["header_status"] # unpacking
         artist_count = library_data["artist_count"]
 
         small_image_lines = {
@@ -189,7 +198,7 @@ class DiscordRPC:
         update_assets = {
             'details': title,
             'buttons': rpc_buttons,
-            'small_image': rpc_small_image,
+            'small_image': user_data["avatar_url"],
             'small_text': rpc_small_image_text,
             'large_text': rpc_large_image_text,
             # situation-dependent assets
